@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Family Ratings - WDW Rides</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+    }
+    header {
+      background: white;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e0e0e0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-content {
+      max-width: 600px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h1 { font-size: 18px; color: #333; }
+    select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .filters select, .filters input {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .filters input { flex: 1; min-width: 150px; }
+    .section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #888;
+      margin: 16px 0 8px;
+      font-weight: 600;
+    }
+    .item-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: box-shadow 0.2s;
+    }
+    .item-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .item-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .score-box {
+      text-align: center;
+      min-width: 50px;
+    }
+    .rank { font-size: 11px; color: #999; }
+    .avg-score { font-size: 24px; font-weight: bold; color: #333; }
+    .vote-count { font-size: 11px; color: #888; }
+    .item-details { flex: 1; min-width: 0; }
+    .item-name { font-weight: 600; color: #333; margin-bottom: 4px; }
+    .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+    .tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .tag-mk { background: #dbeafe; color: #1e40af; }
+    .tag-ep { background: #f3e8ff; color: #7c3aed; }
+    .tag-hs { background: #fee2e2; color: #dc2626; }
+    .tag-ak { background: #dcfce7; color: #16a34a; }
+    .tag-land { background: #f3f4f6; color: #6b7280; }
+    .tag-type { background: #fef9c3; color: #a16207; }
+    .your-vote {
+      background: #eff6ff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-align: center;
+    }
+    .your-vote-label { font-size: 10px; color: #3b82f6; }
+    .your-vote-score { font-weight: 600; color: #1d4ed8; }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      padding: 16px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .modal-header h2 { font-size: 18px; margin-bottom: 8px; }
+    .modal-body { padding: 16px; }
+    .modal-close {
+      float: right;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #888;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .stat { text-align: center; }
+    .stat-value { font-size: 20px; font-weight: bold; }
+    .stat-label { font-size: 11px; color: #888; }
+    .vote-section { margin-bottom: 16px; }
+    .vote-section label { display: block; font-weight: 500; margin-bottom: 8px; }
+    .score-display { font-size: 32px; font-weight: bold; text-align: center; }
+    input[type="range"] {
+      width: 100%;
+      height: 8px;
+      -webkit-appearance: none;
+      background: #e0e0e0;
+      border-radius: 4px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      background: #3b82f6;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #888;
+      margin-top: 4px;
+    }
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      resize: vertical;
+      min-height: 60px;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn:hover { background: #2563eb; }
+    .all-votes { margin-top: 16px; }
+    .all-votes h3 { font-size: 12px; color: #888; text-transform: uppercase; margin-bottom: 8px; }
+    .vote-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 8px;
+      background: #f9fafb;
+      border-radius: 6px;
+      margin-bottom: 4px;
+    }
+    .voter-name { font-weight: 500; }
+    .vote-notes { font-size: 12px; color: #666; margin-top: 2px; }
+    .vote-score { font-size: 20px; font-weight: bold; }
+    .no-voter-msg {
+      text-align: center;
+      padding: 40px 20px;
+      background: #f9fafb;
+      border-radius: 8px;
+      border: 2px dashed #ddd;
+    }
+    .saved-msg {
+      background: #dcfce7;
+      color: #166534;
+      padding: 8px;
+      border-radius: 6px;
+      text-align: center;
+      margin-top: 8px;
+      display: none;
+    }
+    .saved-msg.show { display: block; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>🎢 Family Ratings</h1>
+      <select id="voterSelect">
+        <option value="">Select your name</option>
+        <option value="Karen">Karen</option>
+        <option value="Charlie">Charlie</option>
+        <option value="Meredith">Meredith</option>
+        <option value="Morgan">Morgan</option>
+      </select>
+    </div>
+  </header>
+
+  <main>
+    <div class="filters">
+      <select id="parkFilter">
+        <option value="">All Parks</option>
+        <option value="Magic Kingdom">Magic Kingdom</option>
+        <option value="EPCOT">EPCOT</option>
+        <option value="Hollywood Studios">Hollywood Studios</option>
+        <option value="Animal Kingdom">Animal Kingdom</option>
+      </select>
+      <input type="text" id="searchInput" placeholder="Search rides...">
+    </div>
+
+    <div id="votedSection">
+      <div class="section-title">Rankings</div>
+      <div id="votedList"></div>
+    </div>
+
+    <div id="unvotedSection">
+      <div class="section-title">Not Yet Rated</div>
+      <div id="unvotedList"></div>
+    </div>
+  </main>
+
+  <!-- Vote Modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+        <h2 id="modalTitle"></h2>
+        <div class="tags" id="modalTags"></div>
+      </div>
+      <div class="modal-body">
+        <div class="stats-grid" id="modalStats"></div>
+
+        <div class="vote-section">
+          <label>Your Score</label>
+          <div class="score-display" id="scoreDisplay">50</div>
+          <input type="range" id="scoreSlider" min="1" max="100" value="50">
+          <div class="range-labels">
+            <span>1 (Worst)</span>
+            <span>50</span>
+            <span>100 (Best)</span>
+          </div>
+        </div>
+
+        <div class="vote-section">
+          <label>Notes (optional)</label>
+          <textarea id="notesInput" placeholder="What did you think?"></textarea>
+        </div>
+
+        <button class="btn" id="saveBtn" onclick="saveVote()">Save Vote</button>
+        <div class="saved-msg" id="savedMsg">Vote saved!</div>
+
+        <div class="all-votes" id="allVotesSection">
+          <h3>All Votes</h3>
+          <div id="allVotesList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // WDW Rides Data
+    const rides = [
+      { id: 1, name: "Walt Disney World Railroad", park: "Magic Kingdom", land: "Main Street U.S.A.", type: "Other" },
+      { id: 2, name: "Jungle Cruise", park: "Magic Kingdom", land: "Adventureland", type: "Boat Ride" },
+      { id: 3, name: "Pirates of the Caribbean", park: "Magic Kingdom", land: "Adventureland", type: "Dark Ride" },
+      { id: 4, name: "The Magic Carpets of Aladdin", park: "Magic Kingdom", land: "Adventureland", type: "Flat Ride" },
+      { id: 5, name: "Big Thunder Mountain Railroad", park: "Magic Kingdom", land: "Frontierland", type: "Coaster" },
+      { id: 6, name: "Tiana's Bayou Adventure", park: "Magic Kingdom", land: "Frontierland", type: "Water Ride" },
+      { id: 7, name: "Haunted Mansion", park: "Magic Kingdom", land: "Liberty Square", type: "Dark Ride" },
+      { id: 8, name: "Seven Dwarfs Mine Train", park: "Magic Kingdom", land: "Fantasyland", type: "Coaster" },
+      { id: 9, name: "Space Mountain", park: "Magic Kingdom", land: "Tomorrowland", type: "Coaster" },
+      { id: 10, name: "Peter Pan's Flight", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
+      { id: 11, name: "it's a small world", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
+      { id: 12, name: "The Many Adventures of Winnie the Pooh", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
+      { id: 13, name: "Under the Sea: Journey of the Little Mermaid", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
+      { id: 14, name: "Prince Charming Regal Carrousel", park: "Magic Kingdom", land: "Fantasyland", type: "Flat Ride" },
+      { id: 15, name: "Dumbo the Flying Elephant", park: "Magic Kingdom", land: "Fantasyland", type: "Flat Ride" },
+      { id: 16, name: "The Barnstormer", park: "Magic Kingdom", land: "Fantasyland", type: "Coaster" },
+      { id: 17, name: "Mad Tea Party", park: "Magic Kingdom", land: "Fantasyland", type: "Flat Ride" },
+      { id: 18, name: "TRON Lightcycle / Run", park: "Magic Kingdom", land: "Tomorrowland", type: "Coaster" },
+      { id: 19, name: "Buzz Lightyear's Space Ranger Spin", park: "Magic Kingdom", land: "Tomorrowland", type: "Dark Ride" },
+      { id: 20, name: "Astro Orbiter", park: "Magic Kingdom", land: "Tomorrowland", type: "Flat Ride" },
+      { id: 21, name: "Tomorrowland Transit Authority PeopleMover", park: "Magic Kingdom", land: "Tomorrowland", type: "Other" },
+      { id: 22, name: "Tomorrowland Speedway", park: "Magic Kingdom", land: "Tomorrowland", type: "Other" },
+      { id: 23, name: "Spaceship Earth", park: "EPCOT", land: "World Celebration", type: "Dark Ride" },
+      { id: 24, name: "Journey Into Imagination with Figment", park: "EPCOT", land: "World Celebration", type: "Dark Ride" },
+      { id: 25, name: "Soarin' Around the World", park: "EPCOT", land: "World Nature", type: "Simulator" },
+      { id: 26, name: "Living with the Land", park: "EPCOT", land: "World Nature", type: "Boat Ride" },
+      { id: 27, name: "The Seas with Nemo & Friends", park: "EPCOT", land: "World Nature", type: "Dark Ride" },
+      { id: 28, name: "Guardians of the Galaxy: Cosmic Rewind", park: "EPCOT", land: "World Discovery", type: "Coaster" },
+      { id: 29, name: "Test Track", park: "EPCOT", land: "World Discovery", type: "Simulator" },
+      { id: 30, name: "Mission: SPACE", park: "EPCOT", land: "World Discovery", type: "Simulator" },
+      { id: 31, name: "Frozen Ever After", park: "EPCOT", land: "World Showcase", type: "Dark Ride" },
+      { id: 32, name: "Gran Fiesta Tour Starring The Three Caballeros", park: "EPCOT", land: "World Showcase", type: "Dark Ride" },
+      { id: 33, name: "Remy's Ratatouille Adventure", park: "EPCOT", land: "World Showcase", type: "Dark Ride" },
+      { id: 34, name: "Mickey & Minnie's Runaway Railway", park: "Hollywood Studios", land: "Hollywood Boulevard", type: "Dark Ride" },
+      { id: 35, name: "Tower of Terror", park: "Hollywood Studios", land: "Sunset Boulevard", type: "Dark Ride" },
+      { id: 36, name: "Rock 'n' Roller Coaster Starring Aerosmith", park: "Hollywood Studios", land: "Sunset Boulevard", type: "Coaster" },
+      { id: 37, name: "Slinky Dog Dash", park: "Hollywood Studios", land: "Toy Story Land", type: "Coaster" },
+      { id: 38, name: "Toy Story Mania!", park: "Hollywood Studios", land: "Toy Story Land", type: "Dark Ride" },
+      { id: 39, name: "Alien Swirling Saucers", park: "Hollywood Studios", land: "Toy Story Land", type: "Flat Ride" },
+      { id: 40, name: "Star Wars: Rise of the Resistance", park: "Hollywood Studios", land: "Galaxy's Edge", type: "Dark Ride" },
+      { id: 41, name: "Millennium Falcon: Smugglers Run", park: "Hollywood Studios", land: "Galaxy's Edge", type: "Simulator" },
+      { id: 42, name: "Star Tours - The Adventures Continue", park: "Hollywood Studios", land: "Echo Lake", type: "Simulator" },
+      { id: 43, name: "Kilimanjaro Safaris", park: "Animal Kingdom", land: "Africa", type: "Other" },
+      { id: 44, name: "Expedition Everest", park: "Animal Kingdom", land: "Asia", type: "Coaster" },
+      { id: 45, name: "Kali River Rapids", park: "Animal Kingdom", land: "Asia", type: "Water Ride" },
+      { id: 46, name: "DINOSAUR", park: "Animal Kingdom", land: "DinoLand U.S.A.", type: "Dark Ride" },
+      { id: 47, name: "TriceraTop Spin", park: "Animal Kingdom", land: "DinoLand U.S.A.", type: "Flat Ride" },
+      { id: 48, name: "Avatar Flight of Passage", park: "Animal Kingdom", land: "Pandora", type: "Simulator" },
+      { id: 49, name: "Na'vi River Journey", park: "Animal Kingdom", land: "Pandora", type: "Boat Ride" },
+    ];
+
+    // State
+    let currentVoter = localStorage.getItem('currentVoter') || '';
+    let votes = JSON.parse(localStorage.getItem('familyVotes') || '{}');
+    let selectedRide = null;
+
+    // Initialize
+    document.getElementById('voterSelect').value = currentVoter;
+    document.getElementById('voterSelect').addEventListener('change', (e) => {
+      currentVoter = e.target.value;
+      localStorage.setItem('currentVoter', currentVoter);
+      render();
+    });
+    document.getElementById('parkFilter').addEventListener('change', render);
+    document.getElementById('searchInput').addEventListener('input', render);
+    document.getElementById('scoreSlider').addEventListener('input', (e) => {
+      document.getElementById('scoreDisplay').textContent = e.target.value;
+    });
+
+    function getParkClass(park) {
+      if (park === 'Magic Kingdom') return 'tag-mk';
+      if (park === 'EPCOT') return 'tag-ep';
+      if (park === 'Hollywood Studios') return 'tag-hs';
+      if (park === 'Animal Kingdom') return 'tag-ak';
+      return '';
+    }
+
+    function getRideStats(rideId) {
+      const rideVotes = votes[rideId] || {};
+      const scores = Object.values(rideVotes).map(v => v.score);
+      if (scores.length === 0) return { avg: null, count: 0, min: null, max: null };
+      return {
+        avg: scores.reduce((a, b) => a + b, 0) / scores.length,
+        count: scores.length,
+        min: Math.min(...scores),
+        max: Math.max(...scores)
+      };
+    }
+
+    function render() {
+      const parkFilter = document.getElementById('parkFilter').value;
+      const search = document.getElementById('searchInput').value.toLowerCase();
+
+      let filtered = rides.filter(r => {
+        if (parkFilter && r.park !== parkFilter) return false;
+        if (search && !r.name.toLowerCase().includes(search)) return false;
+        return true;
+      });
+
+      const withStats = filtered.map(r => ({
+        ...r,
+        stats: getRideStats(r.id),
+        userVote: votes[r.id]?.[currentVoter]
+      }));
+
+      const voted = withStats.filter(r => r.stats.count > 0).sort((a, b) => b.stats.avg - a.stats.avg);
+      const unvoted = withStats.filter(r => r.stats.count === 0).sort((a, b) => a.name.localeCompare(b.name));
+
+      document.getElementById('votedSection').style.display = voted.length ? 'block' : 'none';
+      document.getElementById('unvotedSection').style.display = unvoted.length ? 'block' : 'none';
+
+      document.getElementById('votedList').innerHTML = voted.map((r, i) => renderCard(r, i + 1)).join('');
+      document.getElementById('unvotedList').innerHTML = unvoted.map(r => renderCard(r)).join('');
+    }
+
+    function renderCard(ride, rank) {
+      const stats = ride.stats;
+      return `
+        <div class="item-card" onclick="openModal(${ride.id})">
+          <div class="item-row">
+            <div class="score-box">
+              ${rank ? `<div class="rank">#${rank}</div>` : ''}
+              <div class="avg-score">${stats.avg !== null ? Math.round(stats.avg) : '—'}</div>
+              ${stats.count > 0 ? `<div class="vote-count">${stats.count} vote${stats.count !== 1 ? 's' : ''}</div>` : ''}
+            </div>
+            <div class="item-details">
+              <div class="item-name">${ride.name}</div>
+              <div class="tags">
+                <span class="tag ${getParkClass(ride.park)}">${ride.park}</span>
+                <span class="tag tag-land">${ride.land}</span>
+                <span class="tag tag-type">${ride.type}</span>
+              </div>
+            </div>
+            ${ride.userVote ? `
+              <div class="your-vote">
+                <div class="your-vote-label">You</div>
+                <div class="your-vote-score">${ride.userVote.score}</div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function openModal(rideId) {
+      selectedRide = rides.find(r => r.id === rideId);
+      const stats = getRideStats(rideId);
+      const userVote = votes[rideId]?.[currentVoter];
+
+      document.getElementById('modalTitle').textContent = selectedRide.name;
+      document.getElementById('modalTags').innerHTML = `
+        <span class="tag ${getParkClass(selectedRide.park)}">${selectedRide.park}</span>
+        <span class="tag tag-land">${selectedRide.land}</span>
+        <span class="tag tag-type">${selectedRide.type}</span>
+      `;
+
+      document.getElementById('modalStats').innerHTML = `
+        <div class="stat"><div class="stat-value">${stats.avg !== null ? Math.round(stats.avg) : '—'}</div><div class="stat-label">Average</div></div>
+        <div class="stat"><div class="stat-value">${stats.count}</div><div class="stat-label">Votes</div></div>
+        <div class="stat"><div class="stat-value">${stats.min !== null ? stats.min : '—'}</div><div class="stat-label">Min</div></div>
+        <div class="stat"><div class="stat-value">${stats.max !== null ? stats.max : '—'}</div><div class="stat-label">Max</div></div>
+      `;
+
+      const score = userVote?.score || 50;
+      document.getElementById('scoreSlider').value = score;
+      document.getElementById('scoreDisplay').textContent = score;
+      document.getElementById('notesInput').value = userVote?.notes || '';
+
+      // All votes
+      const rideVotes = votes[rideId] || {};
+      const voteList = Object.entries(rideVotes)
+        .map(([voter, data]) => ({ voter, ...data }))
+        .sort((a, b) => b.score - a.score);
+
+      document.getElementById('allVotesSection').style.display = voteList.length ? 'block' : 'none';
+      document.getElementById('allVotesList').innerHTML = voteList.map(v => `
+        <div class="vote-item">
+          <div>
+            <div class="voter-name">${v.voter}</div>
+            ${v.notes ? `<div class="vote-notes">${v.notes}</div>` : ''}
+          </div>
+          <div class="vote-score">${v.score}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('saveBtn').disabled = !currentVoter;
+      document.getElementById('saveBtn').textContent = currentVoter ? (userVote ? 'Update Vote' : 'Save Vote') : 'Select your name first';
+      document.getElementById('savedMsg').classList.remove('show');
+      document.getElementById('modal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+      selectedRide = null;
+    }
+
+    function saveVote() {
+      if (!currentVoter || !selectedRide) return;
+
+      const score = parseInt(document.getElementById('scoreSlider').value);
+      const notes = document.getElementById('notesInput').value.trim();
+
+      if (!votes[selectedRide.id]) votes[selectedRide.id] = {};
+      votes[selectedRide.id][currentVoter] = { score, notes };
+
+      localStorage.setItem('familyVotes', JSON.stringify(votes));
+
+      document.getElementById('savedMsg').classList.add('show');
+      setTimeout(() => {
+        closeModal();
+        render();
+      }, 1000);
+    }
+
+    // Close modal on overlay click
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target.id === 'modal') closeModal();
+    });
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
