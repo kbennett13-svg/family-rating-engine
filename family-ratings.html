@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Family Ratings - WDW Rides</title>
+  <title>Family Ratings</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -37,6 +37,16 @@
       max-width: 600px;
       margin: 0 auto;
       padding: 16px;
+    }
+    .group-selector {
+      margin-bottom: 16px;
+    }
+    .group-selector select {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      background: white;
     }
     .filters {
       display: flex;
@@ -92,6 +102,11 @@
     .tag-ep { background: #f3e8ff; color: #7c3aed; }
     .tag-hs { background: #fee2e2; color: #dc2626; }
     .tag-ak { background: #dcfce7; color: #16a34a; }
+    .tag-cp { background: #fef3c7; color: #d97706; }
+    .tag-sf { background: #fee2e2; color: #dc2626; }
+    .tag-bg { background: #dbeafe; color: #1e40af; }
+    .tag-kd { background: #f3e8ff; color: #7c3aed; }
+    .tag-default { background: #f3f4f6; color: #6b7280; }
     .tag-land { background: #f3f4f6; color: #6b7280; }
     .tag-type { background: #fef9c3; color: #a16207; }
     .your-vote {
@@ -207,13 +222,6 @@
     .voter-name { font-weight: 500; }
     .vote-notes { font-size: 12px; color: #666; margin-top: 2px; }
     .vote-score { font-size: 20px; font-weight: bold; }
-    .no-voter-msg {
-      text-align: center;
-      padding: 40px 20px;
-      background: #f9fafb;
-      border-radius: 8px;
-      border: 2px dashed #ddd;
-    }
     .saved-msg {
       background: #dcfce7;
       color: #166534;
@@ -241,15 +249,16 @@
   </header>
 
   <main>
-    <div class="filters">
-      <select id="parkFilter">
-        <option value="">All Parks</option>
-        <option value="Magic Kingdom">Magic Kingdom</option>
-        <option value="EPCOT">EPCOT</option>
-        <option value="Hollywood Studios">Hollywood Studios</option>
-        <option value="Animal Kingdom">Animal Kingdom</option>
+    <div class="group-selector">
+      <select id="groupSelect">
+        <option value="wdw-rides">🏰 WDW Rides</option>
+        <option value="us-coasters">🎢 US Coasters</option>
       </select>
-      <input type="text" id="searchInput" placeholder="Search rides...">
+    </div>
+
+    <div class="filters">
+      <select id="parkFilter"></select>
+      <input type="text" id="searchInput" placeholder="Search...">
     </div>
 
     <div id="votedSection">
@@ -302,88 +311,174 @@
   </div>
 
   <script>
-    // WDW Rides Data
-    const rides = [
-      { id: 1, name: "Walt Disney World Railroad", park: "Magic Kingdom", land: "Main Street U.S.A.", type: "Other" },
-      { id: 2, name: "Jungle Cruise", park: "Magic Kingdom", land: "Adventureland", type: "Boat Ride" },
-      { id: 3, name: "Pirates of the Caribbean", park: "Magic Kingdom", land: "Adventureland", type: "Dark Ride" },
-      { id: 4, name: "The Magic Carpets of Aladdin", park: "Magic Kingdom", land: "Adventureland", type: "Flat Ride" },
-      { id: 5, name: "Big Thunder Mountain Railroad", park: "Magic Kingdom", land: "Frontierland", type: "Coaster" },
-      { id: 6, name: "Tiana's Bayou Adventure", park: "Magic Kingdom", land: "Frontierland", type: "Water Ride" },
-      { id: 7, name: "Haunted Mansion", park: "Magic Kingdom", land: "Liberty Square", type: "Dark Ride" },
-      { id: 8, name: "Seven Dwarfs Mine Train", park: "Magic Kingdom", land: "Fantasyland", type: "Coaster" },
-      { id: 9, name: "Space Mountain", park: "Magic Kingdom", land: "Tomorrowland", type: "Coaster" },
-      { id: 10, name: "Peter Pan's Flight", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
-      { id: 11, name: "it's a small world", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
-      { id: 12, name: "The Many Adventures of Winnie the Pooh", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
-      { id: 13, name: "Under the Sea: Journey of the Little Mermaid", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
-      { id: 14, name: "Prince Charming Regal Carrousel", park: "Magic Kingdom", land: "Fantasyland", type: "Flat Ride" },
-      { id: 15, name: "Dumbo the Flying Elephant", park: "Magic Kingdom", land: "Fantasyland", type: "Flat Ride" },
-      { id: 16, name: "The Barnstormer", park: "Magic Kingdom", land: "Fantasyland", type: "Coaster" },
-      { id: 17, name: "Mad Tea Party", park: "Magic Kingdom", land: "Fantasyland", type: "Flat Ride" },
-      { id: 18, name: "TRON Lightcycle / Run", park: "Magic Kingdom", land: "Tomorrowland", type: "Coaster" },
-      { id: 19, name: "Buzz Lightyear's Space Ranger Spin", park: "Magic Kingdom", land: "Tomorrowland", type: "Dark Ride" },
-      { id: 20, name: "Astro Orbiter", park: "Magic Kingdom", land: "Tomorrowland", type: "Flat Ride" },
-      { id: 21, name: "Tomorrowland Transit Authority PeopleMover", park: "Magic Kingdom", land: "Tomorrowland", type: "Other" },
-      { id: 22, name: "Tomorrowland Speedway", park: "Magic Kingdom", land: "Tomorrowland", type: "Other" },
-      { id: 23, name: "Spaceship Earth", park: "EPCOT", land: "World Celebration", type: "Dark Ride" },
-      { id: 24, name: "Journey Into Imagination with Figment", park: "EPCOT", land: "World Celebration", type: "Dark Ride" },
-      { id: 25, name: "Soarin' Around the World", park: "EPCOT", land: "World Nature", type: "Simulator" },
-      { id: 26, name: "Living with the Land", park: "EPCOT", land: "World Nature", type: "Boat Ride" },
-      { id: 27, name: "The Seas with Nemo & Friends", park: "EPCOT", land: "World Nature", type: "Dark Ride" },
-      { id: 28, name: "Guardians of the Galaxy: Cosmic Rewind", park: "EPCOT", land: "World Discovery", type: "Coaster" },
-      { id: 29, name: "Test Track", park: "EPCOT", land: "World Discovery", type: "Simulator" },
-      { id: 30, name: "Mission: SPACE", park: "EPCOT", land: "World Discovery", type: "Simulator" },
-      { id: 31, name: "Frozen Ever After", park: "EPCOT", land: "World Showcase", type: "Dark Ride" },
-      { id: 32, name: "Gran Fiesta Tour Starring The Three Caballeros", park: "EPCOT", land: "World Showcase", type: "Dark Ride" },
-      { id: 33, name: "Remy's Ratatouille Adventure", park: "EPCOT", land: "World Showcase", type: "Dark Ride" },
-      { id: 34, name: "Mickey & Minnie's Runaway Railway", park: "Hollywood Studios", land: "Hollywood Boulevard", type: "Dark Ride" },
-      { id: 35, name: "Tower of Terror", park: "Hollywood Studios", land: "Sunset Boulevard", type: "Dark Ride" },
-      { id: 36, name: "Rock 'n' Roller Coaster Starring Aerosmith", park: "Hollywood Studios", land: "Sunset Boulevard", type: "Coaster" },
-      { id: 37, name: "Slinky Dog Dash", park: "Hollywood Studios", land: "Toy Story Land", type: "Coaster" },
-      { id: 38, name: "Toy Story Mania!", park: "Hollywood Studios", land: "Toy Story Land", type: "Dark Ride" },
-      { id: 39, name: "Alien Swirling Saucers", park: "Hollywood Studios", land: "Toy Story Land", type: "Flat Ride" },
-      { id: 40, name: "Star Wars: Rise of the Resistance", park: "Hollywood Studios", land: "Galaxy's Edge", type: "Dark Ride" },
-      { id: 41, name: "Millennium Falcon: Smugglers Run", park: "Hollywood Studios", land: "Galaxy's Edge", type: "Simulator" },
-      { id: 42, name: "Star Tours - The Adventures Continue", park: "Hollywood Studios", land: "Echo Lake", type: "Simulator" },
-      { id: 43, name: "Kilimanjaro Safaris", park: "Animal Kingdom", land: "Africa", type: "Other" },
-      { id: 44, name: "Expedition Everest", park: "Animal Kingdom", land: "Asia", type: "Coaster" },
-      { id: 45, name: "Kali River Rapids", park: "Animal Kingdom", land: "Asia", type: "Water Ride" },
-      { id: 46, name: "DINOSAUR", park: "Animal Kingdom", land: "DinoLand U.S.A.", type: "Dark Ride" },
-      { id: 47, name: "TriceraTop Spin", park: "Animal Kingdom", land: "DinoLand U.S.A.", type: "Flat Ride" },
-      { id: 48, name: "Avatar Flight of Passage", park: "Animal Kingdom", land: "Pandora", type: "Simulator" },
-      { id: 49, name: "Na'vi River Journey", park: "Animal Kingdom", land: "Pandora", type: "Boat Ride" },
-    ];
+    // ===== DATA =====
+    const groups = {
+      'wdw-rides': {
+        name: 'WDW Rides',
+        filterKey: 'park',
+        filterLabel: 'All Parks',
+        filters: ['Magic Kingdom', 'EPCOT', 'Hollywood Studios', 'Animal Kingdom'],
+        items: [
+          { id: 'wdw-1', name: "Walt Disney World Railroad", park: "Magic Kingdom", land: "Main Street U.S.A.", type: "Other" },
+          { id: 'wdw-2', name: "Jungle Cruise", park: "Magic Kingdom", land: "Adventureland", type: "Boat Ride" },
+          { id: 'wdw-3', name: "Pirates of the Caribbean", park: "Magic Kingdom", land: "Adventureland", type: "Dark Ride" },
+          { id: 'wdw-4', name: "The Magic Carpets of Aladdin", park: "Magic Kingdom", land: "Adventureland", type: "Flat Ride" },
+          { id: 'wdw-5', name: "Big Thunder Mountain Railroad", park: "Magic Kingdom", land: "Frontierland", type: "Coaster" },
+          { id: 'wdw-6', name: "Tiana's Bayou Adventure", park: "Magic Kingdom", land: "Frontierland", type: "Water Ride" },
+          { id: 'wdw-7', name: "Haunted Mansion", park: "Magic Kingdom", land: "Liberty Square", type: "Dark Ride" },
+          { id: 'wdw-8', name: "Seven Dwarfs Mine Train", park: "Magic Kingdom", land: "Fantasyland", type: "Coaster" },
+          { id: 'wdw-9', name: "Space Mountain", park: "Magic Kingdom", land: "Tomorrowland", type: "Coaster" },
+          { id: 'wdw-10', name: "Peter Pan's Flight", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
+          { id: 'wdw-11', name: "it's a small world", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
+          { id: 'wdw-12', name: "The Many Adventures of Winnie the Pooh", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
+          { id: 'wdw-13', name: "Under the Sea: Journey of the Little Mermaid", park: "Magic Kingdom", land: "Fantasyland", type: "Dark Ride" },
+          { id: 'wdw-14', name: "Prince Charming Regal Carrousel", park: "Magic Kingdom", land: "Fantasyland", type: "Flat Ride" },
+          { id: 'wdw-15', name: "Dumbo the Flying Elephant", park: "Magic Kingdom", land: "Fantasyland", type: "Flat Ride" },
+          { id: 'wdw-16', name: "The Barnstormer", park: "Magic Kingdom", land: "Fantasyland", type: "Coaster" },
+          { id: 'wdw-17', name: "Mad Tea Party", park: "Magic Kingdom", land: "Fantasyland", type: "Flat Ride" },
+          { id: 'wdw-18', name: "TRON Lightcycle / Run", park: "Magic Kingdom", land: "Tomorrowland", type: "Coaster" },
+          { id: 'wdw-19', name: "Buzz Lightyear's Space Ranger Spin", park: "Magic Kingdom", land: "Tomorrowland", type: "Dark Ride" },
+          { id: 'wdw-20', name: "Astro Orbiter", park: "Magic Kingdom", land: "Tomorrowland", type: "Flat Ride" },
+          { id: 'wdw-21', name: "Tomorrowland Transit Authority PeopleMover", park: "Magic Kingdom", land: "Tomorrowland", type: "Other" },
+          { id: 'wdw-22', name: "Tomorrowland Speedway", park: "Magic Kingdom", land: "Tomorrowland", type: "Other" },
+          { id: 'wdw-23', name: "Spaceship Earth", park: "EPCOT", land: "World Celebration", type: "Dark Ride" },
+          { id: 'wdw-24', name: "Journey Into Imagination with Figment", park: "EPCOT", land: "World Celebration", type: "Dark Ride" },
+          { id: 'wdw-25', name: "Soarin' Around the World", park: "EPCOT", land: "World Nature", type: "Simulator" },
+          { id: 'wdw-26', name: "Living with the Land", park: "EPCOT", land: "World Nature", type: "Boat Ride" },
+          { id: 'wdw-27', name: "The Seas with Nemo & Friends", park: "EPCOT", land: "World Nature", type: "Dark Ride" },
+          { id: 'wdw-28', name: "Guardians of the Galaxy: Cosmic Rewind", park: "EPCOT", land: "World Discovery", type: "Coaster" },
+          { id: 'wdw-29', name: "Test Track", park: "EPCOT", land: "World Discovery", type: "Simulator" },
+          { id: 'wdw-30', name: "Mission: SPACE", park: "EPCOT", land: "World Discovery", type: "Simulator" },
+          { id: 'wdw-31', name: "Frozen Ever After", park: "EPCOT", land: "World Showcase", type: "Dark Ride" },
+          { id: 'wdw-32', name: "Gran Fiesta Tour Starring The Three Caballeros", park: "EPCOT", land: "World Showcase", type: "Dark Ride" },
+          { id: 'wdw-33', name: "Remy's Ratatouille Adventure", park: "EPCOT", land: "World Showcase", type: "Dark Ride" },
+          { id: 'wdw-34', name: "Mickey & Minnie's Runaway Railway", park: "Hollywood Studios", land: "Hollywood Boulevard", type: "Dark Ride" },
+          { id: 'wdw-35', name: "Tower of Terror", park: "Hollywood Studios", land: "Sunset Boulevard", type: "Dark Ride" },
+          { id: 'wdw-36', name: "Rock 'n' Roller Coaster Starring Aerosmith", park: "Hollywood Studios", land: "Sunset Boulevard", type: "Coaster" },
+          { id: 'wdw-37', name: "Slinky Dog Dash", park: "Hollywood Studios", land: "Toy Story Land", type: "Coaster" },
+          { id: 'wdw-38', name: "Toy Story Mania!", park: "Hollywood Studios", land: "Toy Story Land", type: "Dark Ride" },
+          { id: 'wdw-39', name: "Alien Swirling Saucers", park: "Hollywood Studios", land: "Toy Story Land", type: "Flat Ride" },
+          { id: 'wdw-40', name: "Star Wars: Rise of the Resistance", park: "Hollywood Studios", land: "Galaxy's Edge", type: "Dark Ride" },
+          { id: 'wdw-41', name: "Millennium Falcon: Smugglers Run", park: "Hollywood Studios", land: "Galaxy's Edge", type: "Simulator" },
+          { id: 'wdw-42', name: "Star Tours - The Adventures Continue", park: "Hollywood Studios", land: "Echo Lake", type: "Simulator" },
+          { id: 'wdw-43', name: "Kilimanjaro Safaris", park: "Animal Kingdom", land: "Africa", type: "Other" },
+          { id: 'wdw-44', name: "Expedition Everest", park: "Animal Kingdom", land: "Asia", type: "Coaster" },
+          { id: 'wdw-45', name: "Kali River Rapids", park: "Animal Kingdom", land: "Asia", type: "Water Ride" },
+          { id: 'wdw-46', name: "DINOSAUR", park: "Animal Kingdom", land: "DinoLand U.S.A.", type: "Dark Ride" },
+          { id: 'wdw-47', name: "TriceraTop Spin", park: "Animal Kingdom", land: "DinoLand U.S.A.", type: "Flat Ride" },
+          { id: 'wdw-48', name: "Avatar Flight of Passage", park: "Animal Kingdom", land: "Pandora", type: "Simulator" },
+          { id: 'wdw-49', name: "Na'vi River Journey", park: "Animal Kingdom", land: "Pandora", type: "Boat Ride" },
+        ]
+      },
+      'us-coasters': {
+        name: 'US Coasters',
+        filterKey: 'park',
+        filterLabel: 'All Parks',
+        filters: ['Cedar Point', 'Six Flags Magic Mountain', 'Busch Gardens Tampa', 'Kings Island', 'Six Flags Great Adventure', 'Hersheypark', 'Dollywood', 'Carowinds'],
+        items: [
+          // Cedar Point
+          { id: 'cp-1', name: "Steel Vengeance", park: "Cedar Point", type: "Hybrid", height: "205 ft", speed: "74 mph" },
+          { id: 'cp-2', name: "Millennium Force", park: "Cedar Point", type: "Giga", height: "310 ft", speed: "93 mph" },
+          { id: 'cp-3', name: "Maverick", park: "Cedar Point", type: "Launch", height: "105 ft", speed: "70 mph" },
+          { id: 'cp-4', name: "Top Thrill 2", park: "Cedar Point", type: "Launch", height: "420 ft", speed: "120 mph" },
+          { id: 'cp-5', name: "Raptor", park: "Cedar Point", type: "Inverted", height: "137 ft", speed: "57 mph" },
+          { id: 'cp-6', name: "Valravn", park: "Cedar Point", type: "Dive", height: "223 ft", speed: "75 mph" },
+          { id: 'cp-7', name: "GateKeeper", park: "Cedar Point", type: "Wing", height: "170 ft", speed: "67 mph" },
+          { id: 'cp-8', name: "Magnum XL-200", park: "Cedar Point", type: "Hyper", height: "205 ft", speed: "72 mph" },
+          // Six Flags Magic Mountain
+          { id: 'sfmm-1', name: "X2", park: "Six Flags Magic Mountain", type: "4th Dimension", height: "175 ft", speed: "76 mph" },
+          { id: 'sfmm-2', name: "Twisted Colossus", park: "Six Flags Magic Mountain", type: "Hybrid", height: "121 ft", speed: "57 mph" },
+          { id: 'sfmm-3', name: "Tatsu", park: "Six Flags Magic Mountain", type: "Flying", height: "170 ft", speed: "62 mph" },
+          { id: 'sfmm-4', name: "Full Throttle", park: "Six Flags Magic Mountain", type: "Launch", height: "160 ft", speed: "70 mph" },
+          { id: 'sfmm-5', name: "Goliath", park: "Six Flags Magic Mountain", type: "Hyper", height: "235 ft", speed: "85 mph" },
+          { id: 'sfmm-6', name: "Superman: Escape from Krypton", park: "Six Flags Magic Mountain", type: "Launch", height: "415 ft", speed: "100 mph" },
+          // Busch Gardens Tampa
+          { id: 'bgt-1', name: "Iron Gwazi", park: "Busch Gardens Tampa", type: "Hybrid", height: "206 ft", speed: "76 mph" },
+          { id: 'bgt-2', name: "SheiKra", park: "Busch Gardens Tampa", type: "Dive", height: "200 ft", speed: "70 mph" },
+          { id: 'bgt-3', name: "Cheetah Hunt", park: "Busch Gardens Tampa", type: "Launch", height: "102 ft", speed: "60 mph" },
+          { id: 'bgt-4', name: "Montu", park: "Busch Gardens Tampa", type: "Inverted", height: "150 ft", speed: "60 mph" },
+          { id: 'bgt-5', name: "Kumba", park: "Busch Gardens Tampa", type: "Sit-Down", height: "143 ft", speed: "60 mph" },
+          // Kings Island
+          { id: 'ki-1', name: "Orion", park: "Kings Island", type: "Giga", height: "287 ft", speed: "91 mph" },
+          { id: 'ki-2', name: "Mystic Timbers", park: "Kings Island", type: "Wood", height: "109 ft", speed: "53 mph" },
+          { id: 'ki-3', name: "Diamondback", park: "Kings Island", type: "Hyper", height: "230 ft", speed: "80 mph" },
+          { id: 'ki-4', name: "Banshee", park: "Kings Island", type: "Inverted", height: "167 ft", speed: "68 mph" },
+          { id: 'ki-5', name: "The Beast", park: "Kings Island", type: "Wood", height: "110 ft", speed: "65 mph" },
+          // Six Flags Great Adventure
+          { id: 'sfga-1', name: "Kingda Ka", park: "Six Flags Great Adventure", type: "Launch", height: "456 ft", speed: "128 mph" },
+          { id: 'sfga-2', name: "El Toro", park: "Six Flags Great Adventure", type: "Wood", height: "181 ft", speed: "70 mph" },
+          { id: 'sfga-3', name: "Nitro", park: "Six Flags Great Adventure", type: "Hyper", height: "230 ft", speed: "80 mph" },
+          { id: 'sfga-4', name: "Jersey Devil Coaster", park: "Six Flags Great Adventure", type: "Single Rail", height: "130 ft", speed: "58 mph" },
+          // Hersheypark
+          { id: 'hp-1', name: "Candymonium", park: "Hersheypark", type: "Hyper", height: "210 ft", speed: "76 mph" },
+          { id: 'hp-2', name: "Skyrush", park: "Hersheypark", type: "Hyper", height: "200 ft", speed: "75 mph" },
+          { id: 'hp-3', name: "Fahrenheit", park: "Hersheypark", type: "Looping", height: "121 ft", speed: "58 mph" },
+          { id: 'hp-4', name: "Storm Runner", park: "Hersheypark", type: "Launch", height: "150 ft", speed: "72 mph" },
+          // Dollywood
+          { id: 'dw-1', name: "Lightning Rod", park: "Dollywood", type: "Hybrid", height: "165 ft", speed: "73 mph" },
+          { id: 'dw-2', name: "Wild Eagle", park: "Dollywood", type: "Wing", height: "135 ft", speed: "61 mph" },
+          { id: 'dw-3', name: "Tennessee Tornado", park: "Dollywood", type: "Looping", height: "128 ft", speed: "63 mph" },
+          { id: 'dw-4', name: "Big Bear Mountain", park: "Dollywood", type: "Family", height: "66 ft", speed: "48 mph" },
+          // Carowinds
+          { id: 'cw-1', name: "Fury 325", park: "Carowinds", type: "Giga", height: "325 ft", speed: "95 mph" },
+          { id: 'cw-2', name: "Copperhead Strike", park: "Carowinds", type: "Launch", height: "82 ft", speed: "50 mph" },
+          { id: 'cw-3', name: "Intimidator", park: "Carowinds", type: "Hyper", height: "232 ft", speed: "75 mph" },
+          { id: 'cw-4', name: "Afterburn", park: "Carowinds", type: "Inverted", height: "113 ft", speed: "62 mph" },
+        ]
+      }
+    };
 
-    // State
+    // ===== STATE =====
+    let currentGroup = localStorage.getItem('currentGroup') || 'wdw-rides';
     let currentVoter = localStorage.getItem('currentVoter') || '';
     let votes = JSON.parse(localStorage.getItem('familyVotes') || '{}');
-    let selectedRide = null;
+    let selectedItem = null;
 
-    // Initialize
+    // ===== INIT =====
+    document.getElementById('groupSelect').value = currentGroup;
     document.getElementById('voterSelect').value = currentVoter;
+
+    document.getElementById('groupSelect').addEventListener('change', (e) => {
+      currentGroup = e.target.value;
+      localStorage.setItem('currentGroup', currentGroup);
+      document.getElementById('parkFilter').value = '';
+      document.getElementById('searchInput').value = '';
+      updateFilters();
+      render();
+    });
+
     document.getElementById('voterSelect').addEventListener('change', (e) => {
       currentVoter = e.target.value;
       localStorage.setItem('currentVoter', currentVoter);
       render();
     });
+
     document.getElementById('parkFilter').addEventListener('change', render);
     document.getElementById('searchInput').addEventListener('input', render);
     document.getElementById('scoreSlider').addEventListener('input', (e) => {
       document.getElementById('scoreDisplay').textContent = e.target.value;
     });
 
-    function getParkClass(park) {
-      if (park === 'Magic Kingdom') return 'tag-mk';
-      if (park === 'EPCOT') return 'tag-ep';
-      if (park === 'Hollywood Studios') return 'tag-hs';
-      if (park === 'Animal Kingdom') return 'tag-ak';
-      return '';
+    function updateFilters() {
+      const group = groups[currentGroup];
+      const filterSelect = document.getElementById('parkFilter');
+      filterSelect.innerHTML = `<option value="">${group.filterLabel}</option>` +
+        group.filters.map(f => `<option value="${f}">${f}</option>`).join('');
     }
 
-    function getRideStats(rideId) {
-      const rideVotes = votes[rideId] || {};
-      const scores = Object.values(rideVotes).map(v => v.score);
+    function getParkClass(park) {
+      const classes = {
+        'Magic Kingdom': 'tag-mk', 'EPCOT': 'tag-ep', 'Hollywood Studios': 'tag-hs', 'Animal Kingdom': 'tag-ak',
+        'Cedar Point': 'tag-cp', 'Six Flags Magic Mountain': 'tag-sf', 'Busch Gardens Tampa': 'tag-bg',
+        'Kings Island': 'tag-kd', 'Six Flags Great Adventure': 'tag-sf', 'Hersheypark': 'tag-default',
+        'Dollywood': 'tag-default', 'Carowinds': 'tag-default'
+      };
+      return classes[park] || 'tag-default';
+    }
+
+    function getItemStats(itemId) {
+      const itemVotes = votes[itemId] || {};
+      const scores = Object.values(itemVotes).map(v => v.score);
       if (scores.length === 0) return { avg: null, count: 0, min: null, max: null };
       return {
         avg: scores.reduce((a, b) => a + b, 0) / scores.length,
@@ -394,19 +489,20 @@
     }
 
     function render() {
+      const group = groups[currentGroup];
       const parkFilter = document.getElementById('parkFilter').value;
       const search = document.getElementById('searchInput').value.toLowerCase();
 
-      let filtered = rides.filter(r => {
-        if (parkFilter && r.park !== parkFilter) return false;
-        if (search && !r.name.toLowerCase().includes(search)) return false;
+      let filtered = group.items.filter(item => {
+        if (parkFilter && item.park !== parkFilter) return false;
+        if (search && !item.name.toLowerCase().includes(search)) return false;
         return true;
       });
 
-      const withStats = filtered.map(r => ({
-        ...r,
-        stats: getRideStats(r.id),
-        userVote: votes[r.id]?.[currentVoter]
+      const withStats = filtered.map(item => ({
+        ...item,
+        stats: getItemStats(item.id),
+        userVote: votes[item.id]?.[currentVoter]
       }));
 
       const voted = withStats.filter(r => r.stats.count > 0).sort((a, b) => b.stats.avg - a.stats.avg);
@@ -419,10 +515,15 @@
       document.getElementById('unvotedList').innerHTML = unvoted.map(r => renderCard(r)).join('');
     }
 
-    function renderCard(ride, rank) {
-      const stats = ride.stats;
+    function renderCard(item, rank) {
+      const stats = item.stats;
+      const group = groups[currentGroup];
+      const extraTags = currentGroup === 'us-coasters'
+        ? `<span class="tag tag-type">${item.type}</span>${item.speed ? `<span class="tag tag-land">${item.speed}</span>` : ''}`
+        : `<span class="tag tag-land">${item.land}</span><span class="tag tag-type">${item.type}</span>`;
+
       return `
-        <div class="item-card" onclick="openModal(${ride.id})">
+        <div class="item-card" onclick="openModal('${item.id}')">
           <div class="item-row">
             <div class="score-box">
               ${rank ? `<div class="rank">#${rank}</div>` : ''}
@@ -430,17 +531,16 @@
               ${stats.count > 0 ? `<div class="vote-count">${stats.count} vote${stats.count !== 1 ? 's' : ''}</div>` : ''}
             </div>
             <div class="item-details">
-              <div class="item-name">${ride.name}</div>
+              <div class="item-name">${item.name}</div>
               <div class="tags">
-                <span class="tag ${getParkClass(ride.park)}">${ride.park}</span>
-                <span class="tag tag-land">${ride.land}</span>
-                <span class="tag tag-type">${ride.type}</span>
+                <span class="tag ${getParkClass(item.park)}">${item.park}</span>
+                ${extraTags}
               </div>
             </div>
-            ${ride.userVote ? `
+            ${item.userVote ? `
               <div class="your-vote">
                 <div class="your-vote-label">You</div>
-                <div class="your-vote-score">${ride.userVote.score}</div>
+                <div class="your-vote-score">${item.userVote.score}</div>
               </div>
             ` : ''}
           </div>
@@ -448,16 +548,21 @@
       `;
     }
 
-    function openModal(rideId) {
-      selectedRide = rides.find(r => r.id === rideId);
-      const stats = getRideStats(rideId);
-      const userVote = votes[rideId]?.[currentVoter];
+    function openModal(itemId) {
+      const group = groups[currentGroup];
+      selectedItem = group.items.find(r => r.id === itemId);
+      const stats = getItemStats(itemId);
+      const userVote = votes[itemId]?.[currentVoter];
 
-      document.getElementById('modalTitle').textContent = selectedRide.name;
+      document.getElementById('modalTitle').textContent = selectedItem.name;
+
+      const extraTags = currentGroup === 'us-coasters'
+        ? `<span class="tag tag-type">${selectedItem.type}</span>${selectedItem.height ? `<span class="tag tag-land">${selectedItem.height}</span>` : ''}${selectedItem.speed ? `<span class="tag tag-land">${selectedItem.speed}</span>` : ''}`
+        : `<span class="tag tag-land">${selectedItem.land}</span><span class="tag tag-type">${selectedItem.type}</span>`;
+
       document.getElementById('modalTags').innerHTML = `
-        <span class="tag ${getParkClass(selectedRide.park)}">${selectedRide.park}</span>
-        <span class="tag tag-land">${selectedRide.land}</span>
-        <span class="tag tag-type">${selectedRide.type}</span>
+        <span class="tag ${getParkClass(selectedItem.park)}">${selectedItem.park}</span>
+        ${extraTags}
       `;
 
       document.getElementById('modalStats').innerHTML = `
@@ -472,9 +577,8 @@
       document.getElementById('scoreDisplay').textContent = score;
       document.getElementById('notesInput').value = userVote?.notes || '';
 
-      // All votes
-      const rideVotes = votes[rideId] || {};
-      const voteList = Object.entries(rideVotes)
+      const itemVotes = votes[itemId] || {};
+      const voteList = Object.entries(itemVotes)
         .map(([voter, data]) => ({ voter, ...data }))
         .sort((a, b) => b.score - a.score);
 
@@ -497,17 +601,17 @@
 
     function closeModal() {
       document.getElementById('modal').classList.remove('active');
-      selectedRide = null;
+      selectedItem = null;
     }
 
     function saveVote() {
-      if (!currentVoter || !selectedRide) return;
+      if (!currentVoter || !selectedItem) return;
 
       const score = parseInt(document.getElementById('scoreSlider').value);
       const notes = document.getElementById('notesInput').value.trim();
 
-      if (!votes[selectedRide.id]) votes[selectedRide.id] = {};
-      votes[selectedRide.id][currentVoter] = { score, notes };
+      if (!votes[selectedItem.id]) votes[selectedItem.id] = {};
+      votes[selectedItem.id][currentVoter] = { score, notes };
 
       localStorage.setItem('familyVotes', JSON.stringify(votes));
 
@@ -518,12 +622,12 @@
       }, 1000);
     }
 
-    // Close modal on overlay click
     document.getElementById('modal').addEventListener('click', (e) => {
       if (e.target.id === 'modal') closeModal();
     });
 
-    // Initial render
+    // Initial setup
+    updateFilters();
     render();
   </script>
 </body>
